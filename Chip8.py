@@ -56,9 +56,16 @@ class Chip8():
         self.matriz_video = [0] * (ANCHO_CHIP8 * ALTO_CHIP8)
 
     def ciclo_cpu(self):
-        print(f"SP outside CALL: {self.SP.value:2x}")
+        #print(f"SP outside CALL: {self.SP.value:2x}")
         primer_byte = self.ram.read(self.PC.value)
         segundo_byte = self.ram.read(self.PC.value + 1)
+
+        self.PC.value += 2
+
+        if self.DT.value > 0:
+            self.DT.value -= 1
+        if self.ST.value > 0:
+            self.ST.value -= 1
 
         opcode = (primer_byte << 8) | segundo_byte
         
@@ -153,6 +160,8 @@ class Chip8():
                         self.LD_Fx15(VX)
                     case 0x18:
                         self.LD_Fx18(VX)
+                    case 0x1E:
+                        self.ADD_Fx1E(VX)
                     case 0x29:
                         self.LD_Fx29(VX)
                     case 0x33:
@@ -165,9 +174,6 @@ class Chip8():
                     #    raise ValueError("Not a valid instruction")
             #case _:
             #    raise ValueError("Not a valid instruction")
-
-        self.PC.value += 2
-
         
 
     def load_rom(self, rom):
@@ -303,7 +309,7 @@ class Chip8():
 
     # The values of Vx and Vy are compared, and if they are not equal, the program counter is increased by 2.
     def SNE_9xy0(self, VX: NBitRegister, VY: NBitRegister) -> None:
-        if VX.value == VY.value:
+        if VX.value != VY.value:
             self.PC.value += 0x02
 
     # The value of register I is set to nnn.
@@ -312,7 +318,7 @@ class Chip8():
 
     # The program counter is set to nnn plus the value of V0.
     def JP_Bnnn(self, addr: int) -> None:
-        self.PC.value = addr + self.V0.value
+        self.PC.value = (addr + self.V0.value) & 0xFFF
 
     # The interpreter generates a random number from 0 to 255, which is then ANDed with the value kk. The results are stored in Vx. See instruction 8xy2 for more information on AND.
     def RND_Cxkk(self, VX: NBitRegister, kk: int) -> None:
