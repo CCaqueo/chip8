@@ -46,21 +46,28 @@ def main():
                     # Verificamos si la tecla presionada está en nuestro diccionario
                     if event.key in teclas_chip8:
                          indice = teclas_chip8[event.key]
-                         chip8.keys[indice] = True
-                    elif event.key == pygame.K_g:
-                         chip8.LD_Fx07(chip8.V1)
-                         print(f"{chip8.V1.value:02X}")
-                    
+                         chip8.keys[indice] = True                    
                 
                elif event.type == pygame.KEYUP:
                     # Hacemos lo mismo cuando se suelta la tecla
                     if event.key in teclas_chip8:
                         indice = teclas_chip8[event.key]
                         chip8.keys[indice] = False
-          
-          chip8.ciclo_cpu()
 
-          chip8.renderizar_pantalla(ventana=ventana)
+          # Se añade el ciclo for para que la CPU corra a 600 MHz 
+          for _ in range(10):
+               chip8.ciclo_cpu()
+
+          if chip8.DT.value > 0:
+               chip8.DT.value -= 1
+          if chip8.ST.value > 0:
+               chip8.ST.value -= 1
+
+          # La pantalla solo se renderiza si se ejecutó la instrucción DRW_Dxyn.
+          if chip8.draw_flag:
+              chip8.renderizar_pantalla(ventana=ventana)
+              chip8.draw_flag = False
+
           clock.tick(60)
 
      pygame.quit()

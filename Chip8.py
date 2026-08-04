@@ -55,17 +55,13 @@ class Chip8():
         # Definicion de la pantalla como una matriz
         self.matriz_video = [0] * (ANCHO_CHIP8 * ALTO_CHIP8)
 
+        self.draw_flag = False
+
     def ciclo_cpu(self):
-        #print(f"SP outside CALL: {self.SP.value:2x}")
         primer_byte = self.ram.read(self.PC.value)
         segundo_byte = self.ram.read(self.PC.value + 1)
 
         self.PC.value += 2
-
-        if self.DT.value > 0:
-            self.DT.value -= 1
-        if self.ST.value > 0:
-            self.ST.value -= 1
 
         opcode = (primer_byte << 8) | segundo_byte
         
@@ -174,11 +170,9 @@ class Chip8():
                     #    raise ValueError("Not a valid instruction")
             #case _:
             #    raise ValueError("Not a valid instruction")
-        
 
     def load_rom(self, rom):
         for i in range(len(rom)):
-            #print(f"Byte {i}: {rom[i]:2x} | Address: {0x200+i:2x}")
             self.ram.write(0x200 + i, rom[i])
 
     def renderizar_pantalla(self, ventana) -> None:
@@ -208,8 +202,8 @@ class Chip8():
 
     # The interpreter sets the program counter to the address at the top of the stack, then subtracts 1 from the stack pointer.
     def RET_00EE(self) -> None:
-        self.PC.value = self.stack.read(self.SP.value)
         self.SP.value -= 0x01
+        self.PC.value = self.stack.read(self.SP.value)
 
     # The interpreter sets the program counter to nnn.
     def JP_1nnn(self, addr: int) -> None:
@@ -217,8 +211,6 @@ class Chip8():
 
     # The interpreter increments the stack pointer, then puts the current PC on the top of the stack. The PC is then set to nnn.
     def CALL_2nnn(self, addr: int) -> None:
-        print(f"SP: {self.SP.value:2x}")
-        print(f"PC: {self.PC.value:2x}")
         self.stack.write(self.SP.value, self.PC.value)
         self.SP.value += 0x1
         self.PC.value = addr
@@ -357,6 +349,8 @@ class Chip8():
             self.Vf.value = 1
         else: 
             self.Vf.value = 0
+
+        self.draw_flag = True
 
     # Checks the keyboard, and if the key corresponding to the value of Vx is currently in the down position, PC is increased by 2.
     def SKP_Ex9E(self, VX: NBitRegister) -> None:
